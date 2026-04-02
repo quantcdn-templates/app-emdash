@@ -8,7 +8,7 @@ services:
     environment:
       - NODE_ENV=production
       - HOST=0.0.0.0
-      - PORT=3001
+      - PORT=4321
       - EMDASH_AUTH_SECRET=local-dev-secret-change-in-production
       - EMDASH_PREVIEW_SECRET=local-dev-preview-secret
     volumes:

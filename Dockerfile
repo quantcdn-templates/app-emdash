@@ -44,7 +44,7 @@ COPY --from=builder --chown=node:node /build/node_modules ./node_modules
 COPY --from=builder --chown=node:node /build/package.json ./
 
 ENV HOST=0.0.0.0
-ENV PORT=3001
+ENV PORT=4321
 
 EXPOSE 3000
 

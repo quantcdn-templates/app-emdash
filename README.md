@@ -74,9 +74,9 @@ Media uploads are stored on the persistent EFS volume at `/data/uploads`. This s
 ## Architecture
 
 ```
-Internet → Quant CDN → :3000 (Quant Proxy) → :3001 (EmDash/Astro)
+Internet → Quant CDN → :3000 (Quant Proxy) → :4321 (EmDash/Astro)
                                                 ├── /data/data.db (SQLite)
                                                 └── /data/uploads/ (Media)
 ```
 
-The Quant proxy on port 3000 handles host header rewriting and forwards requests to EmDash on port 3001.
+The Quant proxy on port 3000 handles host header rewriting and forwards requests to EmDash on port 4321.
