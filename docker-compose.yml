@@ -1,0 +1,24 @@
+services:
+  app:
+    image: ghcr.io/quantcdn-templates/app-emdash:latest
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=3001
+      - EMDASH_AUTH_SECRET=local-dev-secret-change-in-production
+      - EMDASH_PREVIEW_SECRET=local-dev-preview-secret
+    volumes:
+      - emdash-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+volumes:
+  emdash-data:

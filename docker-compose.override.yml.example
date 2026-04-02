@@ -1,0 +1,12 @@
+# Copy this to docker-compose.override.yml for local development.
+# docker-compose.override.yml is gitignored.
+services:
+  app:
+    build: .
+    ports:
+      - "4321:4321"
+    environment:
+      - NODE_ENV=development
+      - QUANT_PROXY_ENABLED=false
+      - EMDASH_DB_PATH=./data.db
+      - EMDASH_UPLOADS_DIR=./uploads
