@@ -38,6 +38,9 @@ RUN mkdir -p /data/uploads && chown -R node:node /data
 RUN ln -sf /data/data.db /app/data.db && \
     ln -sf /data/uploads /app/uploads
 
+# Astro sessions path gets baked in from the builder's WORKDIR
+RUN mkdir -p /build/node_modules/.astro/sessions && chown -R node:node /build
+
 # Copy built application from builder
 COPY --from=builder --chown=node:node /build/dist ./dist
 COPY --from=builder --chown=node:node /build/node_modules ./node_modules
