@@ -19,8 +19,8 @@ const database = process.env.DB_HOST
 export default defineConfig({
   output: "server",
   adapter: node({ mode: "standalone" }),
-  server: {
-    allowedHosts: true,
+  security: {
+    allowedDomains: [{}],
   },
   image: {
     experimentalLayout: "constrained",

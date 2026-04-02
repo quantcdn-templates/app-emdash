@@ -17,7 +17,7 @@ cd app-emdash
 docker compose up -d
 ```
 
-The application will be available at `http://localhost:3000`. Access the admin panel at `http://localhost:3000/_emdash/admin`.
+The application will be available at `http://localhost:4321`. Access the admin panel at `http://localhost:4321/_emdash/admin`.
 
 ### Local Development
 
