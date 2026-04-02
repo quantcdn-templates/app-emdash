@@ -1,8 +1,8 @@
 [{
-    "title": "emdash CMS",
+    "title": "EmDash CMS",
     "url": "/deploy/app/app-emdash",
     "summary": "Modern TypeScript CMS built on Astro. A spiritual successor to WordPress.",
-    "content": "emdash CMS with server-side rendering, rich text editing via Portable Text, media management, and a plugin system. Uses SQLite by default with optional PostgreSQL for production scale. Built on the Quant Node.js base image with full platform integration.",
+    "content": "EmDash CMS with server-side rendering, rich text editing via Portable Text, media management, and a plugin system. Uses SQLite by default with optional PostgreSQL for production scale. Built on the Quant Node.js base image with full platform integration.",
     "image": "https://raw.githubusercontent.com/quantcdn-templates/app-emdash/main/quant/screenshot.png",
     "categories": ["cms", "nodejs", "ssr"],
     "tags": ["emdash", "cms", "astro", "typescript", "nodejs", "quant"],
@@ -27,7 +27,7 @@
             {
                 "name": "EMDASH_SITE_NAME",
                 "description": "Site display name",
-                "default": "My emdash Site"
+                "default": "My EmDash Site"
             }
         ]
     }

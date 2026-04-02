@@ -1,6 +1,8 @@
-# emdash CMS on Quant Cloud
+# EmDash CMS on Quant Cloud
 
-A production-ready [emdash CMS](https://github.com/emdash-cms/emdash) template for [Quant Cloud](https://www.quantcdn.io). emdash is a modern TypeScript CMS built on Astro, designed as a spiritual successor to WordPress.
+[![Deploy to Quant Cloud](https://www.quantcdn.io/img/quant-deploy-btn-sml.svg)](https://dashboard.quantcdn.io/deploy/app/app-emdash)
+
+A production-ready [EmDash CMS](https://github.com/emdash-cms/emdash) template for [Quant Cloud](https://www.quantcdn.io). EmDash is a modern TypeScript CMS built on Astro, designed as a spiritual successor to WordPress.
 
 ## Quick Start
 
@@ -52,7 +54,7 @@ The dev server runs at `http://localhost:4321`.
 
 ### Default: SQLite
 
-Out of the box, emdash uses SQLite stored on the persistent EFS volume at `/data/data.db`. This works well for single-instance deployments.
+Out of the box, EmDash uses SQLite stored on the persistent EFS volume at `/data/data.db`. This works well for single-instance deployments.
 
 ### Production: PostgreSQL
 
@@ -72,9 +74,9 @@ Media uploads are stored on the persistent EFS volume at `/data/uploads`. This s
 ## Architecture
 
 ```
-Internet → Quant CDN → :3000 (Quant Proxy) → :4321 (emdash/Astro)
+Internet → Quant CDN → :3000 (Quant Proxy) → :3001 (EmDash/Astro)
                                                 ├── /data/data.db (SQLite)
                                                 └── /data/uploads/ (Media)
 ```
 
-The Quant proxy on port 3000 handles host header rewriting and forwards requests to emdash on port 4321.
+The Quant proxy on port 3000 handles host header rewriting and forwards requests to EmDash on port 3001.
