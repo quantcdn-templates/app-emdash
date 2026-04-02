@@ -1,0 +1,105 @@
+# Checks for updates in the upstream emdash blog template and opens a PR
+# when changes are detected. Runs weekly and on manual trigger.
+name: Sync Upstream EmDash Template
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly on Monday at 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clone upstream emdash repo
+        run: |
+          git clone --depth 1 https://github.com/emdash-cms/emdash.git /tmp/emdash-upstream
+
+      - name: Check for template changes
+        id: diff
+        run: |
+          CHANGED=false
+
+          # Compare src/ directory
+          if ! diff -rq src/ /tmp/emdash-upstream/templates/blog/src/ > /dev/null 2>&1; then
+            echo "Source files differ"
+            CHANGED=true
+          fi
+
+          # Compare seed/ directory
+          if ! diff -rq seed/ /tmp/emdash-upstream/templates/blog/seed/ > /dev/null 2>&1; then
+            echo "Seed files differ"
+            CHANGED=true
+          fi
+
+          # Compare emdash-env.d.ts
+          if ! diff -q emdash-env.d.ts /tmp/emdash-upstream/templates/blog/emdash-env.d.ts > /dev/null 2>&1; then
+            echo "Type definitions differ"
+            CHANGED=true
+          fi
+
+          # Check upstream emdash version on npm
+          UPSTREAM_VERSION=$(npm view emdash version 2>/dev/null || echo "unknown")
+          CURRENT_VERSION=$(node -e "const p=require('./package.json'); const v=p.dependencies.emdash; console.log(v.replace('^',''))" 2>/dev/null || echo "unknown")
+          echo "Upstream emdash: $UPSTREAM_VERSION, Current pin: $CURRENT_VERSION"
+
+          if [ "$UPSTREAM_VERSION" != "$CURRENT_VERSION" ] && [ "$UPSTREAM_VERSION" != "unknown" ]; then
+            echo "emdash version differs: $CURRENT_VERSION -> $UPSTREAM_VERSION"
+            CHANGED=true
+          fi
+
+          echo "changed=$CHANGED" >> $GITHUB_OUTPUT
+          echo "upstream_version=$UPSTREAM_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Sync template files
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          # Copy updated source files (preserving our Quant-specific files)
+          rm -rf src/ seed/
+          cp -r /tmp/emdash-upstream/templates/blog/src/ src/
+          cp -r /tmp/emdash-upstream/templates/blog/seed/ seed/
+          cp /tmp/emdash-upstream/templates/blog/emdash-env.d.ts emdash-env.d.ts
+
+      - name: Update emdash version
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          UPSTREAM=${{ steps.diff.outputs.upstream_version }}
+          if [ "$UPSTREAM" != "unknown" ]; then
+            # Update the version range in package.json
+            node -e "
+              const fs = require('fs');
+              const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+              pkg.dependencies.emdash = '^${UPSTREAM}';
+              fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+            "
+          fi
+
+      - name: Create Pull Request
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: sync with upstream emdash blog template'
+          title: 'chore: sync with upstream EmDash blog template'
+          body: |
+            Automated sync with [emdash-cms/emdash](https://github.com/emdash-cms/emdash) `templates/blog/`.
+
+            **Upstream emdash version:** `${{ steps.diff.outputs.upstream_version }}`
+
+            ### What changed
+            - Updated `src/`, `seed/`, and `emdash-env.d.ts` from upstream blog template
+            - Updated emdash dependency version in `package.json`
+
+            ### Review checklist
+            - [ ] Check for breaking changes in upstream template
+            - [ ] Verify Quant-specific files are intact (`Dockerfile`, `astro.config.mjs`, `quant/`)
+            - [ ] Build and test locally: `docker compose up --build`
+          branch: chore/sync-upstream
+          delete-branch: true
