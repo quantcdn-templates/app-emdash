@@ -45,6 +45,7 @@ COPY --from=builder --chown=node:node /build/package.json ./
 
 ENV HOST=0.0.0.0
 ENV PORT=4321
+ENV QUANT_APP_PORT=4321
 
 EXPOSE 3000
 
