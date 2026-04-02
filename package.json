@@ -3,17 +3,22 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "emdash": {
+    "seed": "seed/seed.json"
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "start": "node ./dist/server/entry.mjs",
-    "bootstrap": "emdash init",
+    "bootstrap": "emdash init && emdash seed",
+    "seed": "emdash seed",
     "typecheck": "astro check"
   },
   "dependencies": {
     "@astrojs/node": "^10.0.0",
     "@astrojs/react": "^5.0.0",
+    "@emdash-cms/plugin-audit-log": "^0.1.0",
     "@tanstack/react-query": "^5.0.0",
     "@tanstack/react-router": "^1.100.0",
     "astro": "^6.1.0",
