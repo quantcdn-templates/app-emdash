@@ -136,7 +136,8 @@ jobs:
       - name: Test container startup
         run: |
           echo "Testing container startup..."
-          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          # Test the image this run pushed. On a tag run that is not :latest.
+          IMAGE="$(echo '${{ steps.tags.outputs.tags }}' | cut -d, -f1)"
 
           # Port 3000 is quant-proxy in the base image; it forwards to
           # QUANT_APP_PORT (4321), where the Astro server listens.
