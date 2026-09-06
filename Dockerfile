@@ -4,14 +4,14 @@ ARG NODE_VERSION=22
 FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-bookworm-slim AS builder
 
 # Install pnpm and build tools for native modules (better-sqlite3)
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@12.3.4 --activate
 RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
 
 # Copy package files and install all dependencies
-# pnpm.onlyBuiltDependencies in package.json whitelists native builds
-COPY package.json pnpm-lock.yaml ./
+# pnpm-workspace.yaml carries allowBuilds for the native modules
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 # Copy source and build

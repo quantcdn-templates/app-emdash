@@ -1,0 +1,12 @@
+# pnpm 11+ no longer reads the "pnpm" field in package.json or non-auth
+# settings from .npmrc. All settings live here.
+# https://pnpm.io/settings
+
+# Native modules that must run their install scripts.
+allowBuilds:
+  better-sqlite3: true
+  esbuild: true
+  sharp: true
+
+# The runtime resolves some transitive deps from the top level.
+shamefullyHoist: true
