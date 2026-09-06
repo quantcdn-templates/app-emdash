@@ -34,15 +34,15 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '22'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 12.3.4
 
@@ -50,13 +50,13 @@ jobs:
         run: pnpm install
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -118,7 +118,7 @@ jobs:
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
 
       - name: Build and push multi-arch image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           platforms: linux/amd64,linux/arm64
@@ -138,28 +138,36 @@ jobs:
           echo "Testing container startup..."
           IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
 
+          # Port 3000 is quant-proxy in the base image; it forwards to
+          # QUANT_APP_PORT (4321), where the Astro server listens.
           docker run -d --name test-container \
             -p 3099:3000 \
             -e EMDASH_AUTH_SECRET=test-secret \
             -e EMDASH_PREVIEW_SECRET=test-preview \
-            "$IMAGE" || true
+            "$IMAGE"
 
-          sleep 15
+          fail() {
+            echo "::error::$1"
+            docker logs test-container 2>&1 | tail -50 || true
+            docker rm -f test-container >/dev/null 2>&1 || true
+            exit 1
+          }
 
-          if docker ps | grep test-container; then
-            echo "Container started successfully"
-            if curl -sf http://localhost:3099/ > /dev/null 2>&1; then
-              echo "HTTP endpoint responding"
-            else
-              echo "HTTP endpoint not yet ready (may need initialization time)"
+          # Poll for readiness rather than guessing at a fixed sleep.
+          for i in $(seq 1 30); do
+            if ! docker ps --format '{{.Names}}' | grep -qx test-container; then
+              fail "Container exited before it served a request"
             fi
-            docker stop test-container
-            docker rm test-container
-          else
-            echo "Container exited (checking logs)"
-            docker logs test-container 2>/dev/null || true
-            docker rm test-container 2>/dev/null || true
-          fi
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3099/) || CODE=000
+            if [ "$CODE" -ge 200 ] && [ "$CODE" -lt 500 ]; then
+              echo "Container started successfully (HTTP $CODE after ${i}s)"
+              docker rm -f test-container >/dev/null
+              exit 0
+            fi
+            sleep 1
+          done
+
+          fail "No usable HTTP response on port 3000 after 30s (last code: $CODE)"
 
       - name: Summary
         run: |
