@@ -3,12 +3,14 @@ set -e
 
 echo "emdash: Preparing database..."
 
-# Ensure data directory exists (SQLite mode)
-if [ -z "${DB_HOST}" ]; then
+# Quant Cloud injects DB_HOST for every environment in an application with a
+# managed database, whatever its engine. Only a Postgres port means Postgres;
+# anything else (including the shared MySQL instance) means SQLite on /data.
+if [ -n "${DB_HOST}" ] && [ "${DB_PORT:-5432}" = "5432" ]; then
+  echo "emdash: Using PostgreSQL at ${DB_HOST}:5432"
+else
   mkdir -p /data/uploads
   echo "emdash: Using SQLite at /data/data.db"
-else
-  echo "emdash: Using PostgreSQL at ${DB_HOST}:${DB_PORT:-5432}"
 fi
 
 # Run emdash init - safe to run on every boot:

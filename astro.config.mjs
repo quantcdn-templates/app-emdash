@@ -4,12 +4,17 @@ import emdash, { local } from "emdash/astro";
 import { sqlite, postgres } from "emdash/db";
 import { defineConfig } from "astro/config";
 
-// Auto-detect database: PostgreSQL when DB_HOST is set (Quant Cloud managed DB),
-// otherwise SQLite on the EFS-mounted /data volume.
-const database = process.env.DB_HOST
+// Database selection. Quant Cloud injects DB_HOST for every environment in an
+// application with a managed database, whatever its engine. emdash speaks
+// SQLite or PostgreSQL only, so use Postgres when the injected port says so
+// and fall back to SQLite on the EFS-mounted /data volume otherwise.
+const usePostgres =
+  process.env.DB_HOST && Number(process.env.DB_PORT || 5432) === 5432;
+
+const database = usePostgres
   ? postgres({
       host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT || 5432),
+      port: 5432,
       database: process.env.DB_DATABASE || "emdash",
       user: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
