@@ -1,6 +1,5 @@
 services:
   emdash:
-    image: ghcr.io/quantcdn-templates/app-emdash:latest
     build: .
     restart: unless-stopped
     ports:

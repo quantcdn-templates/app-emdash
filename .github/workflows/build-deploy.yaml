@@ -91,8 +91,23 @@ jobs:
           APP: ${{ steps.init.outputs.quant_application }}
           ENVIRONMENT: ${{ steps.init.outputs.environment_name }}
         run: |
-          curl -fsS -X PUT \
-            -H "Authorization: Bearer $QUANT_API_KEY" \
-            -H "Content-Type: application/json" \
-            -d '{"enabled": true, "idleMinutes": 30}' \
-            "$QUANT_BASE_URL/organizations/$ORG/applications/$APP/environments/$ENVIRONMENT/idle-sleep"
+          URL="$QUANT_BASE_URL/organizations/$ORG/applications/$APP/environments/$ENVIRONMENT"
+          AUTH="Authorization: Bearer $QUANT_API_KEY"
+
+          # Environment creation is asynchronous. The record the idle-sleep
+          # route binds to does not exist until creationStatus is completed.
+          for i in $(seq 1 40); do
+            STATUS=$(curl -s -H "$AUTH" "$URL" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("creationStatus",""))' 2>/dev/null || echo "")
+            if [ "$STATUS" = "completed" ]; then
+              break
+            fi
+            echo "Waiting for environment ($i/40): creationStatus=${STATUS:-not found}"
+            sleep 15
+          done
+          if [ "$STATUS" != "completed" ]; then
+            echo "::error::Environment $ENVIRONMENT did not reach creationStatus=completed"
+            exit 1
+          fi
+
+          curl -fsS -X PUT -H "$AUTH" -H "Content-Type: application/json" \
+            -d '{"enabled": true, "idleMinutes": 30}' "$URL/idle-sleep"
