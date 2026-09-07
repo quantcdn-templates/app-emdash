@@ -1,51 +1,66 @@
 ---
-import { getEmDashCollection, getEntryTerms } from "emdash";
+import {
+	getEmDashCollection,
+	getTermsForEntries,
+	getSiteSettings,
+} from "emdash";
 import { Image } from "emdash/ui";
 import Base from "../layouts/Base.astro";
 import PostCard from "../components/PostCard.astro";
 import { getReadingTime } from "../utils/reading-time";
+import { resolveBlogSiteIdentity } from "../utils/site-identity";
 
-const { entries: posts, cacheHint } = await getEmDashCollection("posts");
+// Limit to what we render (1 featured + 6 grid). The DB does the slicing
+// instead of fetching every post and discarding the tail in JS.
+const POSTS_PER_PAGE = 7;
 
-Astro.cache.set(cacheHint);
+const [{ entries: posts, cacheHint }, settings] = await Promise.all([
+	getEmDashCollection("posts", {
+		orderBy: { published_at: "desc" },
+		limit: POSTS_PER_PAGE + 1, // +1 to detect "view all" need
+	}),
+	getSiteSettings(),
+]);
+const { siteTitle, siteTagline } = resolveBlogSiteIdentity(settings);
 
-const sortedPosts = posts.toSorted((a, b) => {
-	const dateA = a.data.publishedAt?.getTime() ?? 0;
-	const dateB = b.data.publishedAt?.getTime() ?? 0;
-	return dateB - dateA;
-});
+if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+
+// Trim the lookahead post used to detect overflow
+const visiblePosts = posts.slice(0, POSTS_PER_PAGE);
+const hasMorePosts = posts.length > POSTS_PER_PAGE;
 
 // Find the first post with a featured image for the hero
-const featuredPost = sortedPosts.find((p) => p.data.featured_image);
-const featuredIndex = featuredPost ? sortedPosts.indexOf(featuredPost) : -1;
+const featuredPost = visiblePosts.find((p) => p.data.featured_image);
+const featuredIndex = featuredPost ? visiblePosts.indexOf(featuredPost) : -1;
 
 // Get remaining posts (exclude featured if found, limit to 6 for grid)
-const gridPosts = sortedPosts.filter((_, i) => i !== featuredIndex).slice(0, 6);
+const gridPosts = visiblePosts.filter((_, i) => i !== featuredIndex).slice(0, 6);
 
-// Total posts shown = featured (if any) + grid posts
-const totalShown = (featuredPost ? 1 : 0) + gridPosts.length;
-const hasMorePosts = sortedPosts.length > totalShown;
+// Single batched query for tags across the featured post + grid posts.
+// Avoids the N+1 pattern of calling getEntryTerms() per entry.
+// Bylines are already hydrated on entry.data.bylines by getEmDashCollection.
+const tagEntryIds = [
+	...(featuredPost ? [featuredPost.data.id] : []),
+	...gridPosts.map((p) => p.data.id),
+];
+const tagsByEntry = await getTermsForEntries("posts", tagEntryIds, "tag");
 
-// Fetch tags for featured post (bylines are already hydrated by getEmDashCollection)
-let featuredTags: Array<{ slug: string; label: string }> = [];
+const featuredTags = featuredPost
+	? (tagsByEntry.get(featuredPost.data.id) ?? []).map((t) => ({
+			slug: t.slug,
+			label: t.label,
+		}))
+	: [];
 const featuredBylines = featuredPost?.data.bylines ?? [];
-if (featuredPost) {
-	const tags = await getEntryTerms("posts", featuredPost.data.id, "tag");
-	featuredTags = tags.map((t) => ({ slug: t.slug, label: t.label }));
-}
 
-// Fetch tags for grid posts (bylines are already hydrated by getEmDashCollection)
-const gridPostsWithTags = await Promise.all(
-	gridPosts.map(async (post) => {
-		const tags = await getEntryTerms("posts", post.data.id, "tag");
-		const bylines = post.data.bylines ?? [];
-		return {
-			post,
-			tags: tags.map((t) => ({ slug: t.slug, label: t.label })),
-			bylines,
-		};
-	})
-);
+const gridPostsWithTags = gridPosts.map((post) => ({
+	post,
+	tags: (tagsByEntry.get(post.data.id) ?? []).map((t) => ({
+		slug: t.slug,
+		label: t.label,
+	})),
+	bylines: post.data.bylines ?? [],
+}));
 
 // Format date helper
 function formatDate(date: Date | null | undefined) {
@@ -58,7 +73,7 @@ function formatDate(date: Date | null | undefined) {
 }
 ---
 
-<Base title="My Blog" description="Welcome to my blog">
+<Base title={siteTitle} description={siteTagline}>
 	{
 		posts.length === 0 ? (
 			<section class="empty-state">
@@ -287,7 +302,7 @@ function formatDate(date: Date | null | undefined) {
 
 	.featured-title {
 		font-size: clamp(var(--font-size-2xl), 4vw, var(--font-size-4xl));
-		font-weight: 700;
+		font-weight: var(--font-weight-display);
 		line-height: var(--leading-tight);
 		letter-spacing: var(--tracking-tight);
 		transition: color var(--transition-fast);
@@ -295,7 +310,7 @@ function formatDate(date: Date | null | undefined) {
 
 	.featured-title-link:hover .featured-title,
 	.featured-grid:has(.featured-image-link:hover) .featured-title {
-		color: var(--color-accent);
+		color: var(--color-brand);
 	}
 
 	.featured-excerpt {
@@ -313,8 +328,8 @@ function formatDate(date: Date | null | undefined) {
 
 	.featured-tag {
 		display: inline-block;
-		padding: var(--spacing-1) var(--spacing-3);
-		font-size: var(--font-size-sm);
+		padding: var(--tag-padding-y) var(--spacing-2);
+		font-size: var(--font-size-xs);
 		color: var(--color-text-secondary);
 		background: var(--color-surface);
 		border-radius: var(--radius);
@@ -349,13 +364,13 @@ function formatDate(date: Date | null | undefined) {
 
 	.section-link {
 		font-size: var(--font-size-sm);
-		color: var(--color-accent);
+		color: var(--color-brand);
 		text-decoration: none;
 		transition: color var(--transition-fast);
 	}
 
 	.section-link:hover {
-		color: var(--color-accent-hover);
+		color: var(--color-brand-hover);
 	}
 
 	/* Posts Grid */
@@ -382,7 +397,7 @@ function formatDate(date: Date | null | undefined) {
 
 	.empty-state h2 {
 		font-size: var(--font-size-2xl);
-		font-weight: 600;
+		font-weight: var(--font-weight-heading);
 	}
 
 	.empty-state p {
@@ -393,8 +408,8 @@ function formatDate(date: Date | null | undefined) {
 		display: inline-block;
 		margin-top: var(--spacing-4);
 		padding: var(--spacing-3) var(--spacing-6);
-		background: var(--color-accent);
-		color: var(--color-on-accent);
+		background: var(--color-brand);
+		color: var(--color-on-brand);
 		text-decoration: none;
 		border-radius: var(--radius);
 		font-size: var(--font-size-sm);
@@ -403,7 +418,7 @@ function formatDate(date: Date | null | undefined) {
 	}
 
 	.btn:hover {
-		background: var(--color-accent-hover);
+		background: var(--color-brand-hover);
 	}
 
 	/* Responsive */

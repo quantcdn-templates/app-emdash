@@ -152,7 +152,7 @@ const formattedDate = date
 		display: flex;
 		align-items: center;
 		flex-wrap: wrap;
-		column-gap: var(--spacing-2);
+		column-gap: var(--spacing-3);
 		row-gap: 0;
 		font-size: var(--font-size-sm);
 		color: var(--color-muted);
@@ -173,7 +173,7 @@ const formattedDate = date
 
 	.card-title {
 		font-size: var(--font-size-xl);
-		font-weight: 600;
+		font-weight: var(--font-weight-heading);
 		line-height: var(--leading-snug);
 		letter-spacing: var(--tracking-snug);
 		margin-bottom: var(--spacing-2);
@@ -181,7 +181,7 @@ const formattedDate = date
 	}
 
 	.card-link:hover .card-title {
-		color: var(--color-accent);
+		color: var(--color-brand);
 	}
 
 	.card-excerpt {
@@ -205,7 +205,7 @@ const formattedDate = date
 		display: inline-block;
 		padding: var(--tag-padding-y) var(--spacing-2);
 		font-size: var(--font-size-xs);
-		color: var(--color-muted);
+		color: var(--color-text-secondary);
 		background: var(--color-surface);
 		border-radius: var(--radius);
 		text-decoration: none;
@@ -256,7 +256,7 @@ const formattedDate = date
 	}
 
 	.byline-more:focus-visible {
-		outline: 2px solid var(--color-accent);
+		outline: 2px solid var(--color-brand);
 	}
 
 	.byline-more[data-tooltip]:hover::after,

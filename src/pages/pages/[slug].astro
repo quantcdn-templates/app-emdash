@@ -1,9 +1,9 @@
 ---
-import { getEmDashEntry } from "emdash";
+import { getEmDashEntry, decodeSlug } from "emdash";
 import { PortableText } from "emdash/ui";
 import Base from "../../layouts/Base.astro";
 
-const { slug } = Astro.params;
+const slug = decodeSlug(Astro.params.slug);
 
 if (!slug) {
 	return Astro.redirect("/404");
@@ -15,7 +15,7 @@ if (!page) {
 	return Astro.redirect("/404");
 }
 
-Astro.cache.set(cacheHint);
+if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
 ---
 
 <Base
@@ -46,7 +46,7 @@ Astro.cache.set(cacheHint);
 
 	.page-title {
 		font-size: clamp(var(--font-size-2xl), 4vw, var(--font-size-4xl));
-		font-weight: 700;
+		font-weight: var(--font-weight-display);
 		line-height: var(--leading-tight);
 	}
 
