@@ -7,7 +7,7 @@ import { defineConfig } from "astro/config";
 // Database selection. Quant Cloud injects DB_HOST for every environment in an
 // application with a managed database, whatever its engine. emdash speaks
 // SQLite or PostgreSQL only, so use Postgres when the injected port says so
-// and fall back to SQLite on the EFS-mounted /data volume otherwise.
+// and fall back to SQLite on the shared-filesystem-mounted /data volume otherwise.
 const usePostgres =
   process.env.DB_HOST && Number(process.env.DB_PORT || 5432) === 5432;
 

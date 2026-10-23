@@ -41,7 +41,7 @@ RUN find /quant-entrypoint.d -name "*.sh" -exec chmod +x {} \; 2>/dev/null || tr
 # Create persistent data directory for SQLite + uploads
 RUN mkdir -p /data/uploads && chown -R node:node /data
 
-# Symlink default paths to EFS volume so emdash CLI and runtime
+# Symlink default paths to shared filesystem volume so emdash CLI and runtime
 # both use the persistent storage regardless of path configuration
 RUN ln -sf /data/data.db /app/data.db && \
     ln -sf /data/uploads /app/uploads

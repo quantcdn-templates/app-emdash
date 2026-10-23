@@ -54,7 +54,7 @@ The dev server runs at `http://localhost:4321`.
 
 ### Default: SQLite
 
-Out of the box, EmDash uses SQLite stored on the persistent EFS volume at `/data/data.db`. This works well for single-instance deployments.
+Out of the box, EmDash uses SQLite stored on the persistent shared filesystem volume at `/data/data.db`. This works well for single-instance deployments.
 
 ### Production: PostgreSQL
 
@@ -69,7 +69,7 @@ The application auto-detects the Quant Cloud database environment variables (`DB
 
 ## Storage
 
-Media uploads are stored on the persistent EFS volume at `/data/uploads`. This storage is automatically backed up by Quant Cloud.
+Media uploads are stored on the persistent shared filesystem volume at `/data/uploads`. This storage is automatically backed up by Quant Cloud.
 
 ## Architecture
 
