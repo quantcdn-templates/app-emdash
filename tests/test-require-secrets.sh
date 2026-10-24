@@ -20,7 +20,8 @@ run_with_old() {
   local var=$1 other
   other=$(openssl rand -hex 16)
   ERR=$(git show "$BASE_REF:docker-compose.yml" | sed -n "s/^ *- $var=//p" | tr -d '\n' \
-    | { IFS= read -r OLD; export OLD; if [ "$var" = EMDASH_AUTH_SECRET ]; then
+    | { IFS= read -r OLD; export OLD; [ -n "$OLD" ] || { echo "old value is empty" >&2; exit 3; }
+          if [ "$var" = EMDASH_AUTH_SECRET ]; then
           EMDASH_AUTH_SECRET="$OLD" EMDASH_PREVIEW_SECRET="$other" bash -c ". $GUARD"
         else
           EMDASH_AUTH_SECRET="$other" EMDASH_PREVIEW_SECRET="$OLD" bash -c ". $GUARD"
