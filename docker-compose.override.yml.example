@@ -10,3 +10,6 @@ services:
       - QUANT_PROXY_ENABLED=false
       - EMDASH_DB_PATH=./data.db
       - EMDASH_UPLOADS_DIR=./uploads
+      # Generate each value with: openssl rand -hex 32
+      - EMDASH_AUTH_SECRET=
+      - EMDASH_PREVIEW_SECRET=

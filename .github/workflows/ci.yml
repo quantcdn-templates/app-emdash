@@ -35,6 +35,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Lint compose file for fixed secrets
+        run: bash scripts/lint-compose-secrets.sh docker-compose.yml
+
+      - name: Run secret guard tests
+        run: |
+          bash tests/test-require-secrets.sh
+          bash tests/test-lint-compose-secrets.sh
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -142,10 +152,11 @@ jobs:
 
           # Port 3000 is quant-proxy in the base image; it forwards to
           # QUANT_APP_PORT (4321), where the Astro server listens.
+          # Generate secrets at run time. The guard refuses empty and known values.
           docker run -d --name test-container \
             -p 3099:3000 \
-            -e EMDASH_AUTH_SECRET=test-secret \
-            -e EMDASH_PREVIEW_SECRET=test-preview \
+            -e EMDASH_AUTH_SECRET="$(openssl rand -hex 16)" \
+            -e EMDASH_PREVIEW_SECRET="$(openssl rand -hex 16)" \
             "$IMAGE"
 
           fail() {
