@@ -13,9 +13,19 @@ A production-ready [EmDash CMS](https://github.com/emdash-cms/emdash) template f
 git clone <your-repo-url>
 cd app-emdash
 
+# Create the local override file
+cp docker-compose.override.yml.example docker-compose.override.yml
+
+# Set EMDASH_AUTH_SECRET and EMDASH_PREVIEW_SECRET in the override file.
+# Generate each value with:
+openssl rand -hex 32
+
 # Start the application
 docker compose up -d
 ```
+
+The container does not start while these two secrets are empty. Quant Cloud generates
+both secrets for you, so this step applies to local use only.
 
 The application will be available at `http://localhost:4321`. Access the admin panel at `http://localhost:4321/_emdash/admin`.
 
